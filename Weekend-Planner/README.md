@@ -88,7 +88,7 @@ Installation & Getting started
 To get the Weekend Planner up and running on your local machine, follow these steps:
 
 1. Clone the repository
-   git clone "Repository Link"
+   git clone "[Repository Link](https://github.com/Iftekhar1405/Crypto-Coders-029.git)"
 
 2. Navigate to the project directory
    cd weekend-planner
