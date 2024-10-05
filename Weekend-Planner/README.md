@@ -132,7 +132,7 @@ For testing purposes, you can use the following credentials:
   - Password: password123
 - Admin User:
   - Email: admin@example.com
-  - Password: adminpass123
+  - Password: admin123
 
 APIs Used
 
