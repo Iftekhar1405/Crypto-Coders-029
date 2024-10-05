@@ -7,7 +7,7 @@ Project Type
 Frontend
 
 Deployed App
-Netlify : https://glittering-pegasus-27df3a.netlify.app/
+Netlify : https://glowing-sunburst-565982.netlify.app/
 Github : https://github.com/Iftekhar1405/Crypto-Coders-029/tree/main
 
 Project Screenshot :![alt text](image.png)

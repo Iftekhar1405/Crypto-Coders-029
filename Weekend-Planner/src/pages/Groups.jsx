@@ -3,6 +3,9 @@ import { database } from "../utils/firebase";
 import { ref, onValue, push, set, update, remove } from "firebase/database";
 import { useAuth } from "../hooks/useAuth";
 import GroupScheduler from "../components/GroupScheduler";
+import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
+import { FaLock, FaSignInAlt } from "react-icons/fa";
 
 export default function Groups({ darkMode }) {
   const [groups, setGroups] = useState([]);
@@ -77,8 +80,45 @@ export default function Groups({ darkMode }) {
     update(groupRef, { members: updatedMembers });
   };
 
+  if (!user) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.5 }}
+        className={`container mx-auto px-4 py-8 ${darkMode ? "dark" : ""}`}
+      >
+        <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
+          <div className="p-6 text-center">
+            <FaLock className="mx-auto text-4xl text-gray-400 dark:text-gray-600 mb-4" />
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+              Login Required
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Please log in to view and manage groups.
+            </p>
+            <Link
+              to="/login"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition duration-300"
+            >
+              <FaSignInAlt className="mr-2" />
+              Go to Login
+            </Link>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
-    <div className={`container mx-auto px-4 py-8 ${darkMode ? "dark" : ""}`}>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className={`container mx-auto px-4 py-8 ${darkMode ? "dark" : ""}`}
+    >
       <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">
         Groups
       </h1>
@@ -120,8 +160,11 @@ export default function Groups({ darkMode }) {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {groups.map((group) => (
-            <div
+            <motion.div
               key={group.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"
             >
               <h3 className="text-xl font-semibold mb-2 text-gray-800 dark:text-white">
@@ -149,12 +192,12 @@ export default function Groups({ darkMode }) {
                     Join Group
                   </button>
                 ))}
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>
 
       <GroupScheduler darkMode={darkMode} />
-    </div>
+    </motion.div>
   );
 }
