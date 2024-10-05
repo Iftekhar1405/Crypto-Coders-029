@@ -2,7 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { database } from "../utils/firebase";
-import { ref, onValue, push, set } from "firebase/database";
+import { ref, onValue, push, set, remove } from "firebase/database";
+import { motion } from "framer-motion";
+import {
+  FaCalendarAlt,
+  FaUsers,
+  FaClipboardList,
+  FaBell,
+} from "react-icons/fa";
 import GroupScheduler from "../components/GroupScheduler";
 import ActivitySuggestions from "../components/ActivitySuggestions";
 import PollsAndVoting from "../components/PollsAndVoting";
@@ -61,23 +68,44 @@ const Dashboard = () => {
       });
   };
 
+  const handleDeleteEvent = (eventId) => {
+    if (!user) return;
+
+    const eventRef = ref(database, `events/${user.uid}/${eventId}`);
+    remove(eventRef).catch((error) => {
+      console.error("Error deleting event:", error);
+    });
+  };
+
   if (!user) {
     return (
-      <div className="text-center py-8 text-gray-800 dark:text-gray-200">
-        Please log in to access the dashboard.
+      <div className="flex items-center justify-center h-screen">
+        <p className="text-2xl text-gray-600 dark:text-gray-400">
+          Please log in to access the dashboard.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-800 dark:text-white">
-        Welcome, {user.email}!
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="container mx-auto px-4 py-8"
+    >
+      <h1 className="text-4xl font-bold mb-8 text-gray-800 dark:text-white">
+        Welcome, {user.displayName || user.email}!
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-            Schedule Event
+        <motion.div
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaCalendarAlt className="mr-2" /> Schedule Event
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -133,32 +161,45 @@ const Dashboard = () => {
             </div>
             <button
               type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
             >
               Schedule Event
             </button>
           </form>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
-            Your Events
+        </motion.div>
+        <motion.div
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaClipboardList className="mr-2" /> Your Events
           </h2>
           {events.length > 0 ? (
             <ul className="space-y-4">
               {events.map((event) => (
                 <li
                   key={event.id}
-                  className="border-b border-gray-200 dark:border-gray-700 pb-2"
+                  className="border-b border-gray-200 dark:border-gray-700 pb-2 flex justify-between items-center"
                 >
-                  <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                    {event.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    Start: {new Date(event.startDateTime).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    End: {new Date(event.endDateTime).toLocaleString()}
-                  </p>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                      {event.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Start: {new Date(event.startDateTime).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      End: {new Date(event.endDateTime).toLocaleString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteEvent(event.id)}
+                    className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
+                  >
+                    Delete
+                  </button>
                 </li>
               ))}
             </ul>
@@ -167,13 +208,53 @@ const Dashboard = () => {
               No events scheduled yet.
             </p>
           )}
-        </div>
-        <GroupScheduler />
-        <ActivitySuggestions />
-        <PollsAndVoting />
-        <NotificationManager />
+        </motion.div>
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg md:col-span-2"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaUsers className="mr-2" /> Group Scheduler
+          </h2>
+          <GroupScheduler />
+        </motion.div>
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaClipboardList className="mr-2" /> Activity Suggestions
+          </h2>
+          <ActivitySuggestions />
+        </motion.div>
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaClipboardList className="mr-2" /> Polls and Voting
+          </h2>
+          <PollsAndVoting />
+        </motion.div>
+        <motion.div
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 1.2 }}
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg md:col-span-2"
+        >
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
+            <FaBell className="mr-2" /> Notifications
+          </h2>
+          <NotificationManager />
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

@@ -1,5 +1,5 @@
 // src/App.jsx
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./hooks/useAuth";
 import { ToastContainer } from "react-toastify";
@@ -16,30 +16,50 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import ContactUs from "./pages/ContactUs";
 import Registration from "./pages/Registration";
 import AuthForm from "./components/AuthForm";
+import { motion, AnimatePresence } from "framer-motion";
+import AOS from "aos";
+import "aos/dist/aos.css";
 
 function App() {
+  useEffect(() => {
+    AOS.init({
+      duration: 1000,
+      once: true,
+      mirror: false,
+      offset: 100,
+    });
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300">
           <Header />
-          <main className="flex-grow">
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<AuthForm />} />
-              <Route path="/register" element={<Registration />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/activities" element={<Activities />} />
-              <Route path="/groups" element={<Groups />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/contact-us" element={<ContactUs />} />
-            </Routes>
-          </main>
+          <AnimatePresence mode="wait">
+            <motion.main
+              className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<AuthForm />} />
+                <Route path="/register" element={<Registration />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/activities" element={<Activities />} />
+                <Route path="/groups" element={<Groups />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/contact-us" element={<ContactUs />} />
+              </Routes>
+            </motion.main>
+          </AnimatePresence>
           <Footer />
         </div>
-        <ToastContainer />
+        <ToastContainer position="bottom-right" autoClose={3000} />
       </AuthProvider>
     </Router>
   );
