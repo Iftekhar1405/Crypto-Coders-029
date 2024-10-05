@@ -15,7 +15,7 @@ const Home = () => {
         transition={{ duration: 0.8, delay: 0.2 }}
         className="text-center"
       >
-        <h1 className="text-5xl md:text-6xl font-bold text-gray-800 dark:text-white mb-6">
+        <h1 className="text-5xl md:text-6xl font-bold text-gray-100 dark:text-gray-400 mb-6">
           Welcome to{" "}
           <span className="text-primary">
             Weekend

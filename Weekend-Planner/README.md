@@ -7,7 +7,7 @@ Project Type
 Frontend
 
 Deployed App
-Netlify : https://glowing-sunburst-565982.netlify.app/
+Netlify : https://weekend-planner-crypto-coders.netlify.app/
 Github : https://github.com/Iftekhar1405/Crypto-Coders-029/tree/main
 
 Project Screenshot :![alt text](image.png)

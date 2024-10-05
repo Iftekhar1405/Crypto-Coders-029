@@ -1,14 +1,15 @@
-// src/components/GroupScheduler.jsx
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { database } from "../utils/firebase";
-import { ref, onValue, push, set, remove } from "firebase/database";
+import { ref, onValue, push, remove, update } from "firebase/database";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 
-const GroupScheduler = () => {
+export default function GroupScheduler() {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [availableTimes, setAvailableTimes] = useState({});
-  const [newAvailableTime, setNewAvailableTime] = useState("");
+  const [commonFreeTimes, setCommonFreeTimes] = useState({});
+  const [newFreeTimeFrom, setNewFreeTimeFrom] = useState("");
+  const [newFreeTimeTo, setNewFreeTimeTo] = useState("");
   const { user } = useAuth();
 
   useEffect(() => {
@@ -31,7 +32,7 @@ const GroupScheduler = () => {
 
   useEffect(() => {
     if (selectedGroup) {
-      fetchAvailableTimes(selectedGroup);
+      fetchCommonFreeTimes(selectedGroup);
     }
   }, [selectedGroup]);
 
@@ -39,57 +40,81 @@ const GroupScheduler = () => {
     setSelectedGroup(groupId);
   };
 
-  const fetchAvailableTimes = (groupId) => {
-    const timesRef = ref(database, `availableTimes/${groupId}`);
+  const fetchCommonFreeTimes = (groupId) => {
+    const timesRef = ref(database, `commonFreeTimes/${groupId}`);
     onValue(timesRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setAvailableTimes(data);
+        setCommonFreeTimes(data);
       } else {
-        setAvailableTimes({});
+        setCommonFreeTimes({});
       }
     });
   };
 
-  const addAvailableTime = () => {
-    if (!selectedGroup || !user || !newAvailableTime) return;
+  const addCommonFreeTime = () => {
+    if (
+      !selectedGroup ||
+      !user ||
+      !user.isAdmin ||
+      !newFreeTimeFrom ||
+      !newFreeTimeTo
+    )
+      return;
 
-    const userTimesRef = ref(
-      database,
-      `availableTimes/${selectedGroup}/${user.uid}`
-    );
-    push(userTimesRef, newAvailableTime)
+    const groupTimesRef = ref(database, `commonFreeTimes/${selectedGroup}`);
+    push(groupTimesRef, {
+      from: newFreeTimeFrom,
+      to: newFreeTimeTo,
+    })
       .then(() => {
-        setNewAvailableTime("");
+        setNewFreeTimeFrom("");
+        setNewFreeTimeTo("");
       })
       .catch((error) => {
-        console.error("Error adding available time:", error);
+        console.error("Error adding common free time:", error);
       });
   };
 
-  const removeAvailableTime = (timeKey) => {
-    if (!selectedGroup || !user) return;
+  const updateCommonFreeTime = (timeKey, newTimeFrom, newTimeTo) => {
+    if (!selectedGroup || !user || !user.isAdmin) return;
 
     const timeRef = ref(
       database,
-      `availableTimes/${selectedGroup}/${user.uid}/${timeKey}`
+      `commonFreeTimes/${selectedGroup}/${timeKey}`
+    );
+    update(timeRef, { from: newTimeFrom, to: newTimeTo })
+      .then(() => {
+        console.log("Common free time updated successfully");
+      })
+      .catch((error) => {
+        console.error("Error updating common free time:", error);
+      });
+  };
+
+  const removeCommonFreeTime = (timeKey) => {
+    if (!selectedGroup || !user || !user.isAdmin) return;
+
+    const timeRef = ref(
+      database,
+      `commonFreeTimes/${selectedGroup}/${timeKey}`
     );
     remove(timeRef).catch((error) => {
-      console.error("Error removing available time:", error);
+      console.error("Error removing common free time:", error);
     });
   };
 
-  const findCommonFreeTimes = () => {
-    if (Object.keys(availableTimes).length === 0) return [];
-
-    const allTimes = Object.values(availableTimes).map((userTimes) =>
-      Object.values(userTimes)
-    );
-    const firstUserTimes = allTimes[0] || [];
-
-    return firstUserTimes.filter((time) =>
-      allTimes.every((userTimes) => userTimes.includes(time))
-    );
+  const formatDateTime = (dateTimeString) => {
+    const options = {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    };
+    return new Date(dateTimeString).toLocaleString("en-US", options);
   };
 
   return (
@@ -117,66 +142,88 @@ const GroupScheduler = () => {
       {selectedGroup && (
         <div>
           <h3 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
-            Available Times
-          </h3>
-          {Object.entries(availableTimes).map(([userId, times]) => (
-            <div
-              key={userId}
-              className="mb-4 p-4 bg-gray-100 dark:bg-gray-700 rounded-md"
-            >
-              <p className="font-semibold text-lg mb-2 text-gray-800 dark:text-gray-200">
-                {userId === user.uid ? "Your times:" : `User ${userId}:`}
-              </p>
-              <ul className="list-disc pl-5">
-                {Object.entries(times).map(([timeKey, time]) => (
-                  <li
-                    key={timeKey}
-                    className="mb-1 flex items-center justify-between"
-                  >
-                    <span className="text-gray-700 dark:text-gray-300">
-                      {time}
-                    </span>
-                    {userId === user.uid && (
-                      <button
-                        onClick={() => removeAvailableTime(timeKey)}
-                        className="ml-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-          <h3 className="text-2xl font-semibold mb-4 mt-6 text-gray-800 dark:text-gray-200">
             Common Free Times
           </h3>
           <ul className="list-disc pl-5 mb-6">
-            {findCommonFreeTimes().map((time, index) => (
-              <li key={index} className="mb-1 text-gray-700 dark:text-gray-300">
-                {time}
+            {Object.entries(commonFreeTimes).map(([timeKey, timeObj]) => (
+              <li
+                key={timeKey}
+                className="mb-2 flex items-center justify-between"
+              >
+                <span className="text-gray-700 dark:text-gray-300">
+                  From: {formatDateTime(timeObj.from)} <br />
+                  To: {formatDateTime(timeObj.to)}
+                </span>
+                {user.isAdmin && (
+                  <div>
+                    <button
+                      onClick={() => {
+                        const newFrom = prompt(
+                          "Enter new start time:",
+                          timeObj.from
+                        );
+                        const newTo = prompt("Enter new end time:", timeObj.to);
+                        if (newFrom && newTo) {
+                          updateCommonFreeTime(timeKey, newFrom, newTo);
+                        }
+                      }}
+                      className="mr-2 text-yellow-500 hover:text-yellow-600"
+                    >
+                      <FaEdit />
+                    </button>
+                    <button
+                      onClick={() => removeCommonFreeTime(timeKey)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
+                )}
               </li>
             ))}
           </ul>
-          <div className="mt-6">
-            <input
-              type="datetime-local"
-              className="p-3 border rounded-md mr-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
-              value={newAvailableTime}
-              onChange={(e) => setNewAvailableTime(e.target.value)}
-            />
-            <button
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-              onClick={addAvailableTime}
-            >
-              Add Available Time
-            </button>
-          </div>
+          {user.isAdmin && (
+            <div className="mt-6 flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label
+                  htmlFor="timeFrom"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  From
+                </label>
+                <input
+                  id="timeFrom"
+                  type="datetime-local"
+                  className="w-full p-3 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                  value={newFreeTimeFrom}
+                  onChange={(e) => setNewFreeTimeFrom(e.target.value)}
+                />
+              </div>
+              <div className="flex-1">
+                <label
+                  htmlFor="timeTo"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                >
+                  To
+                </label>
+                <input
+                  id="timeTo"
+                  type="datetime-local"
+                  className="w-full p-3 border rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500"
+                  value={newFreeTimeTo}
+                  onChange={(e) => setNewFreeTimeTo(e.target.value)}
+                />
+              </div>
+              <button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-md transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 flex items-center justify-center sm:self-end"
+                onClick={addCommonFreeTime}
+              >
+                <FaPlus className="mr-2" /> Add Common Free Time
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-};
-
-export default GroupScheduler;
+}

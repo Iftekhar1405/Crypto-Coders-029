@@ -95,12 +95,14 @@ export default function Profile() {
             const userData = snapshot.val();
             setProfile({
               ...userData,
+              displayName: user.displayName || userData.name || "",
               email: user.email,
               isAdmin: userData.isAdmin === true,
             });
           } else {
             setProfile((prevProfile) => ({
               ...prevProfile,
+              displayName: user.displayName || "",
               email: user.email,
               isAdmin: false,
             }));
@@ -123,11 +125,8 @@ export default function Profile() {
     try {
       const userRef = ref(database, `users/${user.uid}`);
       await set(userRef, {
-        displayName: profile.displayName,
-        bio: profile.bio,
-        location: profile.location,
-        interests: profile.interests,
-        isAdmin: profile.isAdmin,
+        ...profile,
+        name: profile.displayName, // Update the 'name' field in the database
       });
       setIsEditing(false);
       toast.success("Profile updated successfully!");

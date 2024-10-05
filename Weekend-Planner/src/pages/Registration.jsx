@@ -12,6 +12,8 @@ Modal.setAppElement("#root");
 const Registration = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -30,6 +32,8 @@ const Registration = () => {
 
       await set(ref(database, `users/${user.uid}`), {
         email: user.email,
+        name: name,
+        phone: phone,
         isAdmin: isAdmin,
       });
 
@@ -60,7 +64,7 @@ const Registration = () => {
   };
 
   const goToLogin = () => {
-    navigate("./login");
+    navigate("/login");
   };
 
   return (
@@ -70,6 +74,22 @@ const Registration = () => {
           Register
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="name"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Full Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
           <div>
             <label
               htmlFor="email"
@@ -82,6 +102,22 @@ const Registration = () => {
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="phone"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              Phone Number
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
