@@ -7,7 +7,8 @@ Project Type
 Frontend
 
 Deployed App
-Frontend:
+Netlify : https://glittering-pegasus-27df3a.netlify.app/
+Github :
 
 Directory Structure
 weekend-planner/

@@ -22,18 +22,23 @@ import "aos/dist/aos.css";
 
 function App() {
   useEffect(() => {
+    // Initialize AOS
     AOS.init({
       duration: 1000,
       once: true,
       mirror: false,
       offset: 100,
     });
+
+    // Set dark mode as default
+    document.documentElement.classList.add("dark");
+    localStorage.setItem("darkMode", "true");
   }, []);
 
   return (
     <Router>
       <AuthProvider>
-        <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-indigo-900 transition-colors duration-300">
+        <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-900 to-indigo-900 text-white transition-colors duration-300">
           <Header />
           <AnimatePresence mode="wait">
             <motion.main
@@ -59,7 +64,7 @@ function App() {
           </AnimatePresence>
           <Footer />
         </div>
-        <ToastContainer position="bottom-right" autoClose={3000} />
+        <ToastContainer position="bottom-right" autoClose={3000} theme="dark" />
       </AuthProvider>
     </Router>
   );
