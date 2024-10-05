@@ -8,7 +8,7 @@ Frontend
 
 Deployed App
 Netlify : https://glittering-pegasus-27df3a.netlify.app/
-Github :
+Github : https://github.com/Iftekhar1405/Crypto-Coders-029/tree/main
 
 Directory Structure
 weekend-planner/
