@@ -1,0 +1,66 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "email": "user@example.com",
+      "isAdmin": false
+    },
+    {
+      "id": "2",
+      "email": "admin@example.com",
+      "isAdmin": true
+    }
+  ],
+  "activities": [
+    {
+      "id": "1",
+      "name": "Hiking",
+      "votes": 5
+    },
+    {
+      "id": "2",
+      "name": "Movie Night",
+      "votes": 3
+    },
+    {
+      "id": "3",
+      "name": "Board Game Party",
+      "votes": 4
+    }
+  ],
+  "polls": [
+    {
+      "id": "1",
+      "title": "Weekend Activity",
+      "options": {
+        "Hiking": 3,
+        "Beach Day": 2,
+        "City Tour": 1
+      }
+    }
+  ],
+  "notifications": [
+    {
+      "id": "1",
+      "message": "New event added: Beach Volleyball on Saturday",
+      "createdBy": "1",
+      "createdAt": "2023-06-01T12:00:00Z"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "1",
+      "message": "Great app! Would love to see more outdoor activities.",
+      "status": "pending",
+      "createdAt": "2023-06-02T10:30:00Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "1",
+      "title": "Weekend Hike",
+      "date": "2023-06-10T09:00:00Z",
+      "participants": ["1", "2"]
+    }
+  ]
+}
