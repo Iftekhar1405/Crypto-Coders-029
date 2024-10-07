@@ -7,7 +7,7 @@ Project Type
 Frontend
 
 Deployed App
-Netlify :
+Netlify : https://our-weekend-planner.netlify.app/
 Github : https://github.com/Iftekhar1405/Crypto-Coders-029/tree/main
 
 Project Screenshot :![alt text](image.png)

@@ -4,7 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaSun, FaMoon, FaBars, FaTimes, FaLock } from "react-icons/fa";
 
-const Header = () => {
+export default function Header() {
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -30,19 +30,17 @@ const Header = () => {
   const getMenuItems = () => {
     let items = [{ to: "/", label: "Home" }];
 
-    if (user && user.isAdmin) {
-      items.push({ to: "/admin", label: "Admin" });
-    }
-
-    items = [
-      ...items,
-      { to: "/dashboard", label: "Dashboard" },
-      { to: "/activities", label: "Activities" },
-      { to: "/groups", label: "Groups" },
-    ];
-
     if (user) {
-      items.push({ to: "/profile", label: "Profile" });
+      if (user.isAdmin) {
+        items.push({ to: "/admin", label: "Admin" });
+      }
+      items = [
+        ...items,
+        { to: "/dashboard", label: "Dashboard" },
+        { to: "/activities", label: "Activities" },
+        { to: "/groups", label: "Groups" },
+        { to: "/profile", label: "Profile" },
+      ];
     }
 
     return items;
@@ -55,35 +53,19 @@ const Header = () => {
     visible: { y: 0, transition: { type: "spring", stiffness: 100 } },
   };
 
-  const MenuItem = ({ item, onClick }) => {
-    const handleClick = (e) => {
-      if (
-        !user &&
-        (item.to === "/dashboard" ||
-          item.to === "/activities" ||
-          item.to === "/groups")
-      ) {
-        e.preventDefault();
-        setShowLoginPrompt(true);
-      } else {
-        onClick && onClick();
-      }
-    };
-
-    return (
-      <Link
-        to={item.to}
-        className={`block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 p-2 rounded ${
-          location.pathname === item.to
-            ? "font-bold bg-gray-200 dark:bg-gray-700"
-            : ""
-        }`}
-        onClick={handleClick}
-      >
-        {item.label}
-      </Link>
-    );
-  };
+  const MenuItem = ({ item, onClick }) => (
+    <Link
+      to={item.to}
+      className={`block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 p-2 rounded ${
+        location.pathname === item.to
+          ? "font-bold bg-gray-200 dark:bg-gray-700"
+          : ""
+      }`}
+      onClick={onClick}
+    >
+      {item.label}
+    </Link>
+  );
 
   const LoginPrompt = () => (
     <AnimatePresence>
@@ -186,7 +168,6 @@ const Header = () => {
             </button>
           </div>
         </div>
-        {/* Mobile Menu for screens smaller than 350px */}
         {isOpen && (
           <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
             {menuItems.map((item) => (
@@ -217,6 +198,4 @@ const Header = () => {
       <LoginPrompt />
     </motion.header>
   );
-};
-
-export default Header;
+}
