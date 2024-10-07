@@ -71,7 +71,7 @@ weekend-planner/
 └── main.jsx
 
 Video Walkthrough of the project
-Youtube Link : https://youtu.be/zekmXQLZilE
+Youtube Link : https://youtu.be/J7gMVDaV0Ik
 
 Video Walkthrough of the codebase
 Youtube Link : https://youtu.be/OPquyH5CiME
