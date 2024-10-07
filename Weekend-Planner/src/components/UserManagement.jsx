@@ -130,7 +130,7 @@ const UserManagement = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
+            className="bg-gray-100 text-gray-900 dark:bg-gray-700 dark:text-white p-4 rounded-lg cursor-pointer hover:shadow-md transition-shadow"
             onClick={() => setSelectedUser(selectedUser === user ? null : user)}
           >
             <div className="flex items-center justify-between mb-2">

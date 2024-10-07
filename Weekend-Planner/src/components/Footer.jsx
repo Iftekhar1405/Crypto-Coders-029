@@ -1,4 +1,3 @@
-// src/components/Footer.jsx
 import React from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -8,6 +7,7 @@ import {
   FaInstagram,
   FaLinkedin,
   FaHeart,
+  FaEnvelope,
 } from "react-icons/fa";
 
 const Footer = () => {
@@ -115,6 +115,14 @@ const Footer = () => {
                   Cookie Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  to="/contact-us"
+                  className="text-gray-400 hover:text-white transition-colors duration-300"
+                >
+                  Contact Us
+                </Link>
+              </li>
             </ul>
           </motion.div>
           <motion.div variants={childVariants}>
@@ -159,6 +167,14 @@ const Footer = () => {
                 className="text-gray-400 hover:text-white transition-colors duration-300"
               >
                 <FaLinkedin size={24} />
+              </motion.a>
+              <motion.a
+                href="/contact-us"
+                whileHover={{ scale: 1.2, rotate: 5 }}
+                whileTap={{ scale: 0.9 }}
+                className="text-gray-400 hover:text-white transition-colors duration-300"
+              >
+                <FaEnvelope size={24} />
               </motion.a>
             </div>
           </motion.div>

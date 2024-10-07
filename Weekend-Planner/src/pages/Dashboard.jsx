@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../hooks/useAuth";
@@ -24,11 +26,53 @@ import {
   FaCheck,
   FaEdit,
   FaMapMarkerAlt,
+  FaChevronDown,
+  FaChevronUp,
 } from "react-icons/fa";
 import GroupScheduler from "../components/GroupScheduler";
 import ActivitySuggestions from "../components/ActivitySuggestions";
 import NotificationManager from "../components/NotificationManager";
 import PollsAndVoting from "../components/PollsAndVoting";
+
+const TabButton = ({ active, onClick, children }) => (
+  <button
+    className={`px-4 py-2 font-semibold rounded-t-lg transition-colors duration-300 ${
+      active
+        ? "bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400"
+        : "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600"
+    }`}
+    onClick={onClick}
+  >
+    {children}
+  </button>
+);
+
+const Section = ({ title, children, isOpen, toggleOpen }) => (
+  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg mb-6">
+    <button
+      className="w-full px-6 py-4 flex justify-between items-center text-left focus:outline-none"
+      onClick={toggleOpen}
+    >
+      <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        {title}
+      </h2>
+      {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+    </button>
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.3 }}
+          className="px-6 pb-4"
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
+  </div>
+);
 
 const Modal = ({ isOpen, onClose, title, children }) => (
   <AnimatePresence>
@@ -37,13 +81,13 @@ const Modal = ({ isOpen, onClose, title, children }) => (
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
+        className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
       >
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md"
+          className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
         >
           <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             {title}
@@ -51,7 +95,7 @@ const Modal = ({ isOpen, onClose, title, children }) => (
           {children}
           <button
             onClick={onClose}
-            className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+            className="mt-4 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors duration-300"
           >
             Close
           </button>
@@ -63,6 +107,7 @@ const Modal = ({ isOpen, onClose, title, children }) => (
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState("events");
   const [events, setEvents] = useState([]);
   const [filteredEvents, setFilteredEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -82,6 +127,15 @@ export default function Dashboard() {
   });
   const [showPopup, setShowPopup] = useState(false);
   const [popupMessage, setPopupMessage] = useState("");
+  const [openSections, setOpenSections] = useState({
+    newEvent: false,
+    eventList: false,
+    groupScheduler: false,
+    activitySuggestions: false,
+    pollsAndVoting: false,
+    notifications: false,
+    feedback: false,
+  });
 
   useEffect(() => {
     if (user) {
@@ -251,13 +305,13 @@ export default function Dashboard() {
                     );
                   });
               }}
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2"
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded mr-2 transition-colors duration-300"
             >
               Yes, Delete
             </button>
             <button
               onClick={() => setIsModalOpen(false)}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+              className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded transition-colors duration-300"
             >
               Cancel
             </button>
@@ -276,6 +330,7 @@ export default function Dashboard() {
       endDateTime: event.endDateTime,
       location: event.location,
     });
+    setOpenSections((prev) => ({ ...prev, newEvent: true }));
   };
 
   const handleJoinEvent = (eventId) => {
@@ -409,6 +464,24 @@ export default function Dashboard() {
     setIsModalOpen(true);
   };
 
+  const toggleSection = (section) => {
+    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleClearAllNotifications = () => {
+    if (!user) return;
+
+    const userNotificationsRef = ref(database, `notifications/${user.uid}`);
+    remove(userNotificationsRef)
+      .then(() => {
+        showSuccessMessage("All notifications cleared successfully!");
+      })
+      .catch((error) => {
+        console.error("Error clearing notifications:", error);
+        showErrorMessage("Failed to clear notifications. Please try again.");
+      });
+  };
+
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -420,12 +493,7 @@ export default function Dashboard() {
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="container mx-auto px-4 py-8"
-    >
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -447,234 +515,270 @@ export default function Dashboard() {
         )}
       </AnimatePresence>
 
-      <h1 className="text-4xl font-bold mb-8 text-gray-100 dark:text-white">
-        Welcome, {userName}!
-      </h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {user.isAdmin && (
-          <motion.div
-            initial={{ x: -50, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3"
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-white">
+          Welcome, {userName}!
+        </h1>
+
+        <div className="mb-6 flex space-x-2 overflow-x-auto">
+          <TabButton
+            active={activeTab === "events"}
+            onClick={() => setActiveTab("events")}
           >
-            <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-              <FaCalendarAlt className="mr-2" />
-              {editingEvent ? "Edit Event" : "Schedule Event"}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label
-                  htmlFor="title"
-                  className="block text-sm font-medium text-gray-900 dark:text-gray-300"
-                >
-                  Event Title
-                </label>
-                <input
-                  type="text"
-                  id="title"
-                  name="title"
-                  value={newEvent.title}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="startDateTime"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    Start Date and Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    id="startDateTime"
-                    name="startDateTime"
-                    value={newEvent.startDateTime}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="endDateTime"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    End Date and Time
-                  </label>
-                  <input
-                    type="datetime-local"
-                    id="endDateTime"
-                    name="endDateTime"
-                    value={newEvent.endDateTime}
-                    onChange={handleInputChange}
-                    required
-                    className="mt-1 block w-full px-3 py-2 text-gray-700 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:text-white"
-                  />
-                </div>
-              </div>
-              <div>
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Location
-                </label>
-                <input
-                  type="text"
-                  id="location"
-                  name="location"
-                  value={newEvent.location}
-                  onChange={handleInputChange}
-                  required
-                  className="mt-1 block w-full px-3 py-2 bg-white text-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:text-white"
-                />
-              </div>
-              <button
-                type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
+            <FaCalendarAlt className="inline-block mr-2" />
+            Events
+          </TabButton>
+          <TabButton
+            active={activeTab === "groups"}
+            onClick={() => setActiveTab("groups")}
+          >
+            <FaUsers className="inline-block mr-2" />
+            Groups
+          </TabButton>
+          <TabButton
+            active={activeTab === "polls"}
+            onClick={() => setActiveTab("polls")}
+          >
+            <FaClipboardList className="inline-block mr-2" />
+            Polls
+          </TabButton>
+          <TabButton
+            active={activeTab === "suggestions"}
+            onClick={() => setActiveTab("suggestions")}
+          >
+            <FaComment className="inline-block mr-2" />
+            Activity Suggestions
+          </TabButton>
+        </div>
+
+        {activeTab === "events" && (
+          <div>
+            {user.isAdmin && (
+              <Section
+                title={editingEvent ? "Edit Event" : "Schedule New Event"}
+                isOpen={openSections.newEvent}
+                toggleOpen={() => toggleSection("newEvent")}
               >
-                {editingEvent ? "Update Event" : "Schedule Event"}
-              </button>
-            </form>
-          </motion.div>
-        )}
-        <motion.div
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3"
-        >
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-            <FaClipboardList className="mr-2" /> Events
-          </h2>
-          <div className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search events..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 border rounded-md pr-10 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-              />
-              <FaSearch className="absolute right-3 top-3 text-gray-400" />
-            </div>
-          </div>
-          {filteredEvents.length > 0 ? (
-            <ul className="space-y-4">
-              {filteredEvents.map((event) => (
-                <li
-                  key={event.id}
-                  className="border-b border-gray-200 dark:border-gray-700 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center"
-                >
+                <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                      {event.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Start: {new Date(event.startDateTime).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      End: {new Date(event.endDateTime).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      <FaMapMarkerAlt className="inline mr-1" />
-                      {event.location}
-                    </p>
+                    <label
+                      htmlFor="title"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Event Title
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      name="title"
+                      value={newEvent.title}
+                      onChange={handleInputChange}
+                      required
+                      className="mt-1 block w-full px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    />
                   </div>
-                  <div className="flex space-x-2 mt-2 sm:mt-0">
-                    {user.isAdmin ? (
-                      <>
-                        <button
-                          onClick={() => handleEditEvent(event)}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors duration-300"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteEvent(event.id)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
-                        >
-                          <FaTrash />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() =>
-                          event.isJoined
-                            ? handleLeaveEvent(event.id)
-                            : handleJoinEvent(event.id)
-                        }
-                        className={`px-3 py-1 rounded-md transition-colors duration-300 ${
-                          event.isJoined
-                            ? "bg-red-500 text-white hover:bg-red-600"
-                            : "bg-blue-500 text-white hover:bg-blue-600"
-                        }`}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="startDateTime"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
                       >
-                        {event.isJoined ? <FaUserMinus /> : <FaUserPlus />}
-                      </button>
-                    )}
+                        Start Date and Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        id="startDateTime"
+                        name="startDateTime"
+                        value={newEvent.startDateTime}
+                        onChange={handleInputChange}
+                        required
+                        className="mt-1 block w-full px-3 py-2 bg-white text-gray-900 dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="endDateTime"
+                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >
+                        End Date and Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        id="endDateTime"
+                        name="endDateTime"
+                        value={newEvent.endDateTime}
+                        onChange={handleInputChange}
+                        required
+                        className="mt-1 block w-full px-3 py-2 text-gray-700 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:text-white"
+                      />
+                    </div>
                   </div>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-gray-600 dark:text-gray-400">No events found.</p>
-          )}
-        </motion.div>
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3"
+                  <div>
+                    <label
+                      htmlFor="location"
+                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      id="location"
+                      name="location"
+                      value={newEvent.location}
+                      onChange={handleInputChange}
+                      required
+                      className="mt-1 block w-full px-3 py-2 bg-white text-gray-700 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:text-white"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-300"
+                  >
+                    {editingEvent ? "Update Event" : "Schedule Event"}
+                  </button>
+                </form>
+              </Section>
+            )}
+
+            <Section
+              title="Event List"
+              isOpen={openSections.eventList}
+              toggleOpen={() => toggleSection("eventList")}
+            >
+              <div className="mb-4">
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Search events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-md pr-10 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                  />
+                  <FaSearch className="absolute right-3 top-3 text-gray-400" />
+                </div>
+              </div>
+              {filteredEvents.length > 0 ? (
+                <ul className="space-y-4 max-h-96 overflow-y-auto pr-4 custom-scrollbar">
+                  {filteredEvents.map((event) => (
+                    <li
+                      key={event.id}
+                      className="border-b border-gray-200 dark:border-gray-700 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center"
+                    >
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                          {event.title}
+                        </h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Start:{" "}
+                          {new Date(event.startDateTime).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          End: {new Date(event.endDateTime).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          <FaMapMarkerAlt className="inline mr-1" />
+                          {event.location}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2 mt-2 sm:mt-0">
+                        {user.isAdmin ? (
+                          <>
+                            <button
+                              onClick={() => handleEditEvent(event)}
+                              className="px-3 py-1 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors duration-300"
+                            >
+                              <FaEdit />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteEvent(event.id)}
+                              className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
+                            >
+                              <FaTrash />
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() =>
+                              event.isJoined
+                                ? handleLeaveEvent(event.id)
+                                : handleJoinEvent(event.id)
+                            }
+                            className={`px-4 py-2 rounded-md transition-colors duration-300 text-lg ${
+                              event.isJoined
+                                ? "bg-red-500 text-white hover:bg-red-600"
+                                : "bg-blue-500 text-white hover:bg-blue-600"
+                            }`}
+                          >
+                            {event.isJoined ? <FaUserMinus /> : <FaUserPlus />}
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-600 dark:text-gray-400">
+                  No events found.
+                </p>
+              )}
+            </Section>
+          </div>
+        )}
+
+        {activeTab === "groups" && (
+          <Section
+            title="Group Scheduler"
+            isOpen={openSections.groupScheduler}
+            toggleOpen={() => toggleSection("groupScheduler")}
+          >
+            <GroupScheduler />
+          </Section>
+        )}
+
+        {activeTab === "polls" && (
+          <Section
+            title="Polls and Voting"
+            isOpen={openSections.pollsAndVoting}
+            toggleOpen={() => toggleSection("pollsAndVoting")}
+          >
+            <PollsAndVoting />
+          </Section>
+        )}
+
+        {activeTab === "suggestions" && (
+          <Section
+            title="Activity Suggestions"
+            isOpen={openSections.activitySuggestions}
+            toggleOpen={() => toggleSection("activitySuggestions")}
+          >
+            <ActivitySuggestions />
+          </Section>
+        )}
+
+        <Section
+          title="Notifications"
+          isOpen={openSections.notifications}
+          toggleOpen={() => toggleSection("notifications")}
         >
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-            <FaUsers className="mr-2" /> Group Scheduler
-          </h2>
-          <GroupScheduler />
-        </motion.div>
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
-        >
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-            <FaClipboardList className="mr-2" /> Activity Suggestions
-          </h2>
-          <ActivitySuggestions />
-        </motion.div>
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg"
-        >
-          <PollsAndVoting />
-        </motion.div>
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.2 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3"
-        >
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-            <FaBell className="mr-2" /> Notifications
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+              Your Notifications
+            </h3>
+            <button
+              onClick={handleClearAllNotifications}
+              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors duration-300"
+            >
+              Clear All
+            </button>
+          </div>
           <NotificationManager />
-        </motion.div>
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 1.4 }}
-          className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg col-span-1 md:col-span-2 lg:col-span-3"
+        </Section>
+
+        <Section
+          title="Feedback"
+          isOpen={openSections.feedback}
+          toggleOpen={() => toggleSection("feedback")}
         >
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
-            <FaComment className="mr-2" /> Feedback
-          </h2>
           <form onSubmit={handleFeedbackSubmit} className="space-y-4">
             <div>
               <label
@@ -701,8 +805,8 @@ export default function Dashboard() {
               Submit Feedback
             </button>
           </form>
-        </motion.div>
+        </Section>
       </div>
-    </motion.div>
+    </div>
   );
 }

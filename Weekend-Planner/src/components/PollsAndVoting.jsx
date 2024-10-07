@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../hooks/useAuth";
 import { database } from "../utils/firebase";
@@ -10,6 +12,8 @@ import {
   FaEdit,
   FaVoteYea,
   FaTimes,
+  FaChevronDown,
+  FaChevronUp,
 } from "react-icons/fa";
 
 const PollsAndVoting = () => {
@@ -19,6 +23,7 @@ const PollsAndVoting = () => {
   const [showAddPoll, setShowAddPoll] = useState(false);
   const [editingPoll, setEditingPoll] = useState(null);
   const [error, setError] = useState(null);
+  const [expandedPoll, setExpandedPoll] = useState(null);
 
   useEffect(() => {
     const pollsRef = ref(database, "polls");
@@ -56,22 +61,9 @@ const PollsAndVoting = () => {
           }
 
           if (updatedOptions[optionIndex].votes[user.uid]) {
-            // User has already voted, so remove their vote
             delete updatedOptions[optionIndex].votes[user.uid];
           } else {
-            // User hasn't voted, so add their vote
             updatedOptions[optionIndex].votes[user.uid] = true;
-
-            // Remove vote from other options
-            Object.keys(updatedOptions).forEach((key) => {
-              if (
-                key !== optionIndex &&
-                updatedOptions[key].votes &&
-                updatedOptions[key].votes[user.uid]
-              ) {
-                delete updatedOptions[key].votes[user.uid];
-              }
-            });
           }
 
           update(pollRef, { options: updatedOptions })
@@ -162,8 +154,44 @@ const PollsAndVoting = () => {
     setShowAddPoll(true);
   };
 
+  const handleDeleteOption = (pollId, optionIndex) => {
+    if (!user || !user.isAdmin) {
+      setError("You must be an admin to delete poll options.");
+      return;
+    }
+
+    const pollRef = ref(database, `polls/${pollId}`);
+    onValue(
+      pollRef,
+      (snapshot) => {
+        const pollData = snapshot.val();
+        if (pollData && pollData.options) {
+          const updatedOptions = { ...pollData.options };
+          delete updatedOptions[optionIndex];
+          update(pollRef, { options: updatedOptions })
+            .then(() => {
+              setError(null);
+            })
+            .catch((error) => {
+              console.error("Error deleting poll option:", error);
+              setError("Failed to delete poll option. Please try again.");
+            });
+        } else {
+          setError("Poll not found or invalid poll structure.");
+        }
+      },
+      {
+        onlyOnce: true,
+      }
+    );
+  };
+
+  const togglePollExpansion = (pollId) => {
+    setExpandedPoll(expandedPoll === pollId ? null : pollId);
+  };
+
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+    <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white flex items-center">
         <FaPoll className="mr-2" /> Polls and Voting
       </h2>
@@ -179,7 +207,7 @@ const PollsAndVoting = () => {
         <div className="mb-4">
           <button
             onClick={() => setShowAddPoll(!showAddPoll)}
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300 flex items-center"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300 flex items-center w-full sm:w-auto justify-center sm:justify-start"
           >
             <FaPlus className="mr-2" /> {editingPoll ? "Edit Poll" : "Add Poll"}
           </button>
@@ -192,10 +220,10 @@ const PollsAndVoting = () => {
                   setNewPoll({ ...newPoll, title: e.target.value })
                 }
                 placeholder="Poll Title"
-                className="w-full p-2 mb-2 border rounded"
+                className="w-full p-2 mb-2 border rounded text-gray-900 dark:text-white bg-white dark:bg-gray-800"
               />
               {newPoll.options.map((option, index) => (
-                <div key={index} className="flex mb-2">
+                <div key={index} className="flex mb-2 flex-col sm:flex-row">
                   <input
                     type="text"
                     value={option}
@@ -205,7 +233,7 @@ const PollsAndVoting = () => {
                       setNewPoll({ ...newPoll, options: newOptions });
                     }}
                     placeholder={`Option ${index + 1}`}
-                    className="flex-grow p-2 border rounded"
+                    className="flex-grow p-2 border rounded text-gray-900 dark:text-white bg-white dark:bg-gray-800 mb-2 sm:mb-0 sm:mr-2"
                   />
                   <button
                     onClick={() => {
@@ -214,26 +242,31 @@ const PollsAndVoting = () => {
                       );
                       setNewPoll({ ...newPoll, options: newOptions });
                     }}
-                    className="ml-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition duration-300"
+                    className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition duration-300 w-full sm:w-auto"
                   >
                     Remove
                   </button>
                 </div>
               ))}
-              <button
-                onClick={() =>
-                  setNewPoll({ ...newPoll, options: [...newPoll.options, ""] })
-                }
-                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300 mr-2"
-              >
-                Add Option
-              </button>
-              <button
-                onClick={handleAddPoll}
-                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300"
-              >
-                {editingPoll ? "Update Poll" : "Create Poll"}
-              </button>
+              <div className="flex flex-col sm:flex-row mt-2">
+                <button
+                  onClick={() =>
+                    setNewPoll({
+                      ...newPoll,
+                      options: [...newPoll.options, ""],
+                    })
+                  }
+                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition duration-300 mb-2 sm:mb-0 sm:mr-2 w-full sm:w-auto"
+                >
+                  Add Option
+                </button>
+                <button
+                  onClick={handleAddPoll}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition duration-300 w-full sm:w-auto"
+                >
+                  {editingPoll ? "Update Poll" : "Create Poll"}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -248,48 +281,84 @@ const PollsAndVoting = () => {
               exit={{ opacity: 0, y: -20 }}
               className="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg"
             >
-              <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
-                {poll.title}
-              </h3>
-              <ul className="space-y-2">
-                {Object.entries(poll.options).map(([index, option]) => (
-                  <li key={index} className="flex justify-between items-center">
-                    <button
-                      onClick={() => handleVote(poll.id, index)}
-                      className={`flex-grow text-left px-4 py-2 rounded transition duration-300 ${
-                        option.votes && option.votes[user?.uid]
-                          ? "bg-green-500 text-white"
-                          : "bg-blue-500 text-white hover:bg-blue-600"
-                      }`}
-                    >
-                      {option.text}{" "}
-                      {option.votes && option.votes[user?.uid] && (
-                        <FaVoteYea className="inline-block ml-2" />
-                      )}
-                    </button>
-                    <span className="ml-2 text-gray-600 dark:text-gray-400">
-                      {option.votes ? Object.keys(option.votes).length : 0}{" "}
-                      votes
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {user && user.isAdmin && (
-                <div className="mt-2 flex space-x-2">
-                  <button
-                    onClick={() => handleEditPoll(poll)}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition duration-300 flex items-center"
+              <div
+                className="flex justify-between items-center cursor-pointer"
+                onClick={() => togglePollExpansion(poll.id)}
+              >
+                <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-gray-200">
+                  {poll.title}
+                </h3>
+                {expandedPoll === poll.id ? <FaChevronUp /> : <FaChevronDown />}
+              </div>
+              <AnimatePresence>
+                {expandedPoll === poll.id && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.3 }}
                   >
-                    <FaEdit className="mr-2" /> Edit Poll
-                  </button>
-                  <button
-                    onClick={() => handleDeletePoll(poll.id)}
-                    className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300 flex items-center"
-                  >
-                    <FaTrash className="mr-2" /> Delete Poll
-                  </button>
-                </div>
-              )}
+                    <ul className="space-y-4 mt-4">
+                      {Object.entries(poll.options).map(([index, option]) => (
+                        <li
+                          key={index}
+                          className="flex flex-col sm:flex-row sm:items-center bg-blue-500 dark:blue-500 rounded-lg p-4 shadow-md"
+                        >
+                          <div className="flex-grow mb-2 sm:mb-0 sm:mr-4">
+                            <button
+                              onClick={() => handleVote(poll.id, index)}
+                              className={`w-full text-left px-4 py-2 rounded transition duration-300 ${
+                                option.votes && option.votes[user?.uid]
+                                  ? "bg-green-500 text-white"
+                                  : "bg-blue-500 text-white hover:bg-blue-600"
+                              }`}
+                            >
+                              {option.text}{" "}
+                              {option.votes && option.votes[user?.uid] && (
+                                <FaVoteYea className="inline-block ml-2" />
+                              )}
+                            </button>
+                          </div>
+                          <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
+                            <span className="text-gray-600 dark:text-gray-300 mr-4 font-semibold text-lg">
+                              {option.votes
+                                ? Object.keys(option.votes).length
+                                : 0}{" "}
+                              votes
+                            </span>
+                            {user && user.isAdmin && (
+                              <button
+                                onClick={() =>
+                                  handleDeleteOption(poll.id, index)
+                                }
+                                className="bg-red-500 text-white px-3 py-2 rounded-full hover:bg-red-600 transition duration-300"
+                              >
+                                <FaTimes />
+                              </button>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    {user && user.isAdmin && (
+                      <div className="mt-6 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                        <button
+                          onClick={() => handleEditPoll(poll)}
+                          className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition duration-300 flex items-center justify-center"
+                        >
+                          <FaEdit className="mr-2" /> Edit Poll
+                        </button>
+                        <button
+                          onClick={() => handleDeletePoll(poll.id)}
+                          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition duration-300 flex items-center justify-center"
+                        >
+                          <FaTrash className="mr-2" /> Delete Poll
+                        </button>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           ))}
         </AnimatePresence>

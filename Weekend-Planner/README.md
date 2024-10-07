@@ -7,7 +7,7 @@ Project Type
 Frontend
 
 Deployed App
-Netlify : https://weekend-planner-crypto-coders.netlify.app/
+Netlify :
 Github : https://github.com/Iftekhar1405/Crypto-Coders-029/tree/main
 
 Project Screenshot :![alt text](image.png)
@@ -29,6 +29,9 @@ weekend-planner/
 │ └── background.jpg
 └── src/
 ├── components/
+│ ├── AdminDashboard.jsx
+│ ├── DarkModeToggle.jsx  
+│ ├── SampleNotifications.jsx
 │ ├── Header.jsx
 │ ├── Footer.jsx
 │ ├── AuthForm.jsx
@@ -41,6 +44,7 @@ weekend-planner/
 │ └── SupportFeedback.jsx
 ├── hooks/
 │ ├── useAuth.js
+│ ├── usefirebase.js
 │ └── useScheduler.js
 ├── pages/
 │ ├── Home.jsx
@@ -52,11 +56,17 @@ weekend-planner/
 │ ├── PrivacyPolicy.jsx
 │ ├── ContactUs.jsx
 │ └── Registration.jsx
+│ └── TermsOfService.jsx
+│ └── CookiePolicy.jsx
+├── services/
+│ ├── NotificationService.jsx
 ├── utils/
 │ ├── firebase.js
 │ └── graphDataStructure.js
-├── styles/
-│ └── index.css
+│ └── initializeLocationGraph.js
+│ └── notifications.js
+├── App.css
+├── index.css
 ├── App.jsx
 └── main.jsx
 

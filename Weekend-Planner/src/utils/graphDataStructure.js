@@ -1,97 +1,67 @@
+import { database } from "./firebase";
+import { ref, set, get } from "firebase/database";
+
 class Graph {
   constructor() {
-    this.adjacencyList = new Map();
+    this.nodes = new Map();
   }
 
-  addVertex(vertex) {
-    if (!this.adjacencyList.has(vertex)) {
-      this.adjacencyList.set(vertex, new Set());
+  addNode(key, value = {}) {
+    const sanitizedKey = this.sanitizeKey(key);
+    if (!this.nodes.has(sanitizedKey)) {
+      this.nodes.set(sanitizedKey, { value, edges: new Set() });
     }
   }
 
-  addEdge(vertex1, vertex2) {
-    this.addVertex(vertex1);
-    this.addVertex(vertex2);
-    this.adjacencyList.get(vertex1).add(vertex2);
-    this.adjacencyList.get(vertex2).add(vertex1);
+  addEdge(node1, node2) {
+    const sanitizedNode1 = this.sanitizeKey(node1);
+    const sanitizedNode2 = this.sanitizeKey(node2);
+    this.addNode(sanitizedNode1);
+    this.addNode(sanitizedNode2);
+    this.nodes.get(sanitizedNode1).edges.add(sanitizedNode2);
+    this.nodes.get(sanitizedNode2).edges.add(sanitizedNode1);
   }
 
-  removeEdge(vertex1, vertex2) {
-    this.adjacencyList.get(vertex1).delete(vertex2);
-    this.adjacencyList.get(vertex2).delete(vertex1);
+  getRelatedLocations(key) {
+    const sanitizedKey = this.sanitizeKey(key);
+    const node = this.nodes.get(sanitizedKey);
+    return node ? Array.from(node.edges) : [];
   }
 
-  removeVertex(vertex) {
-    if (!this.adjacencyList.has(vertex)) return;
-
-    for (let adjacentVertex of this.adjacencyList.get(vertex)) {
-      this.removeEdge(vertex, adjacentVertex);
-    }
-    this.adjacencyList.delete(vertex);
+  sanitizeKey(key) {
+    // Remove any invalid characters and trim the key
+    return key.replace(/[.#$\/\[\]]/g, "_").trim();
   }
 
-  depthFirstSearch(start) {
-    const visited = new Set();
-    const result = [];
+  async saveToFirebase() {
+    const graphData = {};
+    this.nodes.forEach((node, key) => {
+      graphData[key] = {
+        value: node.value,
+        connectedLocations: Array.from(node.edges).reduce((acc, edge) => {
+          acc[edge] = true;
+          return acc;
+        }, {}),
+      };
+    });
 
-    const dfs = (vertex) => {
-      if (!vertex) return null;
-
-      visited.add(vertex);
-      result.push(vertex);
-
-      this.adjacencyList.get(vertex).forEach((neighbor) => {
-        if (!visited.has(neighbor)) {
-          return dfs(neighbor);
-        }
-      });
-    };
-
-    dfs(start);
-    return result;
+    const graphRef = ref(database, "locationGraph");
+    await set(graphRef, graphData);
   }
 
-  breadthFirstSearch(start) {
-    const queue = [start];
-    const result = [];
-    const visited = new Set();
-    visited.add(start);
+  async loadFromFirebase() {
+    const graphRef = ref(database, "locationGraph");
+    const snapshot = await get(graphRef);
+    const data = snapshot.val();
 
-    while (queue.length) {
-      let vertex = queue.shift();
-      result.push(vertex);
-
-      this.adjacencyList.get(vertex).forEach((neighbor) => {
-        if (!visited.has(neighbor)) {
-          visited.add(neighbor);
-          queue.push(neighbor);
-        }
+    if (data) {
+      Object.entries(data).forEach(([key, { value, connectedLocations }]) => {
+        this.addNode(key, value);
+        Object.keys(connectedLocations).forEach((connectedLocation) => {
+          this.addEdge(key, connectedLocation);
+        });
       });
     }
-    return result;
-  }
-
-  findShortestPath(start, end) {
-    const queue = [[start]];
-    const visited = new Set();
-
-    while (queue.length > 0) {
-      const path = queue.shift();
-      const vertex = path[path.length - 1];
-
-      if (vertex === end) {
-        return path;
-      }
-
-      if (!visited.has(vertex)) {
-        for (let neighbor of this.adjacencyList.get(vertex)) {
-          const newPath = [...path, neighbor];
-          queue.push(newPath);
-        }
-        visited.add(vertex);
-      }
-    }
-    return null; // Path not found
   }
 }
 

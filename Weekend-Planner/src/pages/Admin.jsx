@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { database } from "../utils/firebase";
@@ -26,9 +28,13 @@ const AdminCard = ({ title, icon, count, onClick }) => (
     <div className="flex items-center justify-between">
       <div className="flex items-center">
         {icon}
-        <h3 className="text-xl font-semibold ml-2">{title}</h3>
+        <h3 className="text-xl font-semibold ml-2 text-gray-800 dark:text-white">
+          {title}
+        </h3>
       </div>
-      <span className="text-3xl font-bold">{count}</span>
+      <span className="text-3xl font-bold text-gray-800 dark:text-white">
+        {count}
+      </span>
     </div>
   </motion.div>
 );
@@ -70,9 +76,8 @@ export default function Admin() {
     const unsubscribeActivities = fetchData("activities", setActivities);
     const unsubscribeGroups = fetchData("groups", setGroups);
     const unsubscribeFeedbacks = fetchData("feedbacks", setFeedbacks);
-    const unsubscribeNotifications = fetchData(
-      "adminNotifications",
-      setNotifications
+    const unsubscribeNotifications = fetchData("adminNotifications", (notifs) =>
+      setNotifications(notifs.sort((a, b) => b.timestamp - a.timestamp))
     );
 
     return () => {
@@ -336,7 +341,7 @@ export default function Admin() {
           key={item.id}
           className="flex justify-between items-center bg-gray-100 dark:bg-gray-700 p-2 rounded"
         >
-          <span>
+          <span className="text-gray-800 dark:text-white">
             {item.title || item.name || item.feedback || item.message}
           </span>
           <div className="flex items-center">
@@ -401,8 +406,12 @@ export default function Admin() {
           className="fixed inset-0 flex items-center justify-center z-50"
         >
           <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl">
-            <h3 className="text-lg font-semibold mb-2">{popupContent.title}</h3>
-            <p>{popupContent.message}</p>
+            <h3 className="text-lg font-semibold mb-2 text-gray-800 dark:text-white">
+              {popupContent.title}
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              {popupContent.message}
+            </p>
             <button
               onClick={() => setShowPopup(false)}
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -422,7 +431,7 @@ export default function Admin() {
       exit={{ opacity: 0 }}
       className="container mx-auto px-4 py-8"
     >
-      <h1 className="text-4xl font-bold mb-8 text-gray-800 dark:text-white">
+      <h1 className="text-4xl font-bold mb-8 text-gray-100 dark:text-white">
         Admin Dashboard
       </h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
@@ -466,7 +475,7 @@ export default function Admin() {
 
       {selectedSection === "users" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             User Management
           </h2>
           <UserManagement
@@ -486,7 +495,7 @@ export default function Admin() {
 
       {selectedSection === "events" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             Event Management
           </h2>
           {renderItemList(events, "events")}
@@ -501,7 +510,7 @@ export default function Admin() {
 
       {selectedSection === "activities" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             Activity Management
           </h2>
           {renderItemList(activities, "activities")}
@@ -516,7 +525,7 @@ export default function Admin() {
 
       {selectedSection === "groups" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             Group Management
           </h2>
           {renderItemList(groups, "groups")}
@@ -531,7 +540,7 @@ export default function Admin() {
 
       {selectedSection === "feedbacks" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             Feedback Management
           </h2>
           {renderItemList(feedbacks, "feedbacks")}
@@ -546,7 +555,7 @@ export default function Admin() {
 
       {selectedSection === "notifications" && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-bold mb-4 text-gray-800 dark:text-white">
+          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
             User Activity Notifications
           </h2>
           {renderItemList(notifications, "notifications")}
