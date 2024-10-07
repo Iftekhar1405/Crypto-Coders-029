@@ -1,4 +1,4 @@
-Weekend Planner
+Weekend Planner:
 
 Introduction
 Weekend Planner is an innovative application designed to simplify and enhance the process of planning weekends with friends. It addresses the common challenges of coordinating schedules, deciding on activities, and managing group logistics. Our platform aims to streamline the planning process, making it easier for friends to spend quality time together without the usual hassles of organization.
